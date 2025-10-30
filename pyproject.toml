@@ -1,0 +1,25 @@
+[build-system]
+requires = ["uv_build >= 0.9.5, <0.10.0"]
+build-backend = "uv_build"
+
+
+[project]
+name = "PdfPageManipulator_vheidari"
+version = "0.0.1"
+author = [
+    {name ="Vahid Heidari", email="vahid-heidari@hotmail.com"}
+]
+description = "PdfPageManipulator is a small, simple, fast, and straightforward Python package specially designed for GrabMyPdf software. This package offers a powerful and user-friendly interface that allows GrabMyPdf to manipulate PDF pages."
+
+readme = "README.md"
+requires-python = ">=3.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/vheidari/PdfPageManipulator.git"
+Issues = "https://github.com/vheidari/PdfPageManipulator/issues"
