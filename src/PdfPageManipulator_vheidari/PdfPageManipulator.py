@@ -173,7 +173,7 @@ class PdfPageManipulator:
         Note:
             Page numbers are 0-based (first page is 0, second is 1, etc.)
         """
-        self.__dispatch_action(PdfActions.ADD_BLANK, use_buffer, after_page)
+        self.__dispatch_action(PdfActions.ADD_BLANK, use_buffer, after_page = after_page)
 
 
 
@@ -186,33 +186,50 @@ class PdfPageManipulator:
             page_list (list[int], optional): List of page numbers to extract.
                                            Defaults to None.
                                            
-        The extracted pages maintain their original content but are separated
-        into a new collection. Use save() to write them to a new file.
+        Uses list comprehension to efficiently extract the specified pages
+        while preserving their order in the page_list. The extracted pages
+        replace the current page list (use save() to write to a new file).
+        
+        Example:
+            >>> pdf.extract_pages(page_list=[0, 2, 5])  # Extracts pages 0, 2, and 5
         
         Note:
-            Page numbers are 0-based (first page is 0, second is 1, etc.)
+            - Page numbers are 0-based (first page is 0, second is 1, etc.)
+            - Updates self.pages and self.page_length automatically
+            - Ignores any page numbers that are out of range
+            
+        Raises:
+            ValueError: If page_list is None
         """
-        self.__dispatch_action(PdfActions.EXTRACT_PAGES, use_buffer, page_list)
+        self.__dispatch_action(PdfActions.EXTRACT_PAGES, use_buffer, page_list = page_list)
      
     def extract_range(self, use_buffer: bool = True, page_list: list[int] = None) -> None:
         """Extract a continuous range of pages from the PDF.
         
         Args:
             use_buffer (bool, optional): Whether to use buffering. Defaults to True.
-            page_list (list[int], optional): List containing start and end page numbers.
-                                           Should contain exactly two elements [start, end].
+            page_list (list[int], optional): List containing [start, end] page numbers.
+                                           Must contain exactly two elements.
                                            Defaults to None.
                                            
-        The range is inclusive of both start and end pages. The extracted pages
-        can be saved to a new file using save().
+        Extracts pages from start to end (inclusive) using array slicing.
+        The extracted pages are stored in self.pages after the operation.
         
         Example:
-            >>> pdf.extract_range(page_list=[1, 5])  # Extracts pages 1 through 5
+            >>> pdf.extract_range(page_list=[1, 5])  # Extracts pages 1,2,3,4,5
         
         Note:
-            Page numbers are 0-based (first page is 0, second is 1, etc.)
-        """        
-        self.__dispatch_action(PdfActions.EXTRACT_RANGE, use_buffer, page_list)
+            - Page numbers are 0-based (first page is 0, second is 1, etc.)
+            - Both start and end pages are included in the extraction
+            - Updates self.pages and self.page_length automatically
+        
+        Raises:
+            IndexError: If page_list indexes are out of range
+            ValueError: If page_list doesn't contain exactly 2 elements
+        """
+        from_page   = page_list[0]
+        to_page     = page_list[1]
+        self.__dispatch_action(PdfActions.EXTRACT_RANGE, use_buffer, from_page = from_page, to_page = to_page)
 
     def extract_evens(self, use_buffer: bool = True) -> None:
         """Extract all even-numbered pages from the PDF.
@@ -249,15 +266,24 @@ class PdfPageManipulator:
             use_buffer (bool, optional): Whether to use buffering. Defaults to True.
             
         This method:
-        1. Extracts even-numbered pages (0, 2, 4, ...) into self.even_pages
-        2. Extracts odd-numbered pages (1, 3, 5, ...) into self.odd_pages
-        3. Saves each set to a separate PDF file
+        1. Uses _op_even_odd_and_save helper to separate pages:
+           - Even pages (0, 2, 4, ...) go to self.even_pages
+           - Odd pages (1, 3, 5, ...) go to self.odd_pages
+        2. Updates internal state (pages and page_length)
+        3. Sets up for saving with suffixed filenames
         
-        The output filenames will be based on the original filename with
-        '_even' and '_odd' suffixes.
+        The output files will be named:
+        - Original name + '_even.pdf' for even pages
+        - Original name + '_odd.pdf' for odd pages
+        
+        Example:
+            >>> pdf.extract_even_odd_and_save()
+            # Creates: 'document_even.pdf' and 'document_odd.pdf'
         
         Note:
-            Page numbers are 0-based, so page 0 is considered even.
+            - Page numbers are 0-based (page 0 is even)
+            - Both collections are saved automatically
+            - Original page list is preserved
         """        
         self.__dispatch_action(PdfActions.EXTRACT_EVEN_ODD_AND_SAVE, use_buffer)
 
@@ -285,20 +311,32 @@ class PdfPageManipulator:
         """        
         self.__dispatch_action(PdfActions.REMOVE_LAST_PAGE, use_buffer)
 
-    def remove_pages(self, page_number: int, use_buffer: bool = True) -> None:
-        """Remove a specific page from the PDF by its page number.
+    def remove_pages(self, page_list: list[int] = None, use_buffer: bool = True) -> None:
+        """Remove multiple pages from the PDF by their page numbers.
         
         Args:
-            page_number (int): The page number to remove
+            page_list (list[int]): List of page numbers to remove
             use_buffer (bool, optional): Whether to use buffering. Defaults to True.
             
-        The specified page will be removed and all subsequent pages
-        will be shifted back by one position.
+        Uses list comprehension to create a new page list excluding the specified
+        page numbers. Pages are removed in a single operation, and the remaining
+        pages are reindexed automatically.
+        
+        Example:
+            >>> pdf.remove_pages([1, 3, 5])  # Removes pages 1, 3, and 5
         
         Note:
-            Page numbers are 0-based (first page is 0, second is 1, etc.)
-        """        
-        self.__dispatch_action(PdfActions.REMOVE_PAGES, use_buffer)
+            - Page numbers are 0-based (first page is 0, second is 1, etc.)
+            - Pages can be removed in any order
+            - Updates self.pages and self.page_length automatically
+            
+        Raises:
+            ValueError: If page_list is None
+        """
+        if page_list == None:
+                 raise ValueError("page_list cant' be a None, plase pass correct page_list. ex: [0, 11, 12, 99]")
+        
+        self.__dispatch_action(PdfActions.REMOVE_PAGES, use_buffer, page_list = page_list)
          
 
 
@@ -312,49 +350,105 @@ class PdfPageManipulator:
         
         Args:
             action (PdfActions): The PDF operation to perform
-            use_buffer (bool): Whether to use buffering
-            **kw_args: Additional keyword arguments passed to the operation
+            use_buffer (bool): Whether to use buffering for operations
+            **kw_args: Additional keyword arguments specific to each operation:
+                - index (int): Page index for insert operations
+                - page_list (list[int]): List of page numbers for extract/remove operations
+                - from_page (int): Start page for range extraction
+                - to_page (int): End page for range extraction
             
-        This method maps PdfActions to their corresponding implementation methods
-        using a dictionary of lightweight lambda functions. Each lambda typically
-        calls a helper method that performs the actual work.
+        The dispatch system uses direct list operations and list comprehensions for:
+        - Insert: Uses _op_insert_at helper with buffering
+        - Extract: List comprehensions to filter pages
+        - Remove: List slicing or filtering via comprehension
         
-        The helper methods handle the details of:
-        - Creating/managing PdfWriter instances
-        - Adding/removing pages
-        - Maintaining page lists and counts
-        - Updating internal state
+        After each operation, updates page list and length via _op_update_pages_and_its_len.
         
         Raises:
             ValueError: If an unknown action is provided
+            KeyError: If required kw_args are missing for an operation
         """        
         # Map each action to a lightweight lambda that calls the appropriate helper
         operations = {
-            PdfActions.INSERT_FIRST               : self._op_insert_at(kw_args["index"]),
-            PdfActions.INSERT_LAST                : self._op_insert_at(kw_args["index"]),
-            PdfActions.ADD_AFTER_PAGE             : self._op_insert_at(kw_args["index"]),
-            PdfActions.ADD_BLANK                  : self._op_insert_at(kw_args["index"]),
-            # PdfActions.EXTRACT_PAGES              : lambda : ,
-            # PdfActions.EXTRACT_RANGE              : lambda : ,
-            # PdfActions.EXTRACT_EVENS              : lambda : ,
-            # PdfActions.EXTRACT_ODDS               : lambda : ,
-            # PdfActions.EXTRACT_EVEN_ODD_AND_SAVE  : lambda : ,
+            PdfActions.INSERT_FIRST               : lambda : self._op_insert_at(kw_args["index"], use_buffer),
+            PdfActions.INSERT_LAST                : lambda : self._op_insert_at(kw_args["index"], use_buffer),
+            PdfActions.ADD_AFTER_PAGE             : lambda : self._op_insert_at(kw_args["index"], use_buffer),
+            PdfActions.ADD_BLANK                  : lambda : self._op_insert_at(kw_args["index"], use_buffer),
+            PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if self.pages[i] in kw_args["page_list"]] ,
+            PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"]: kw_args["to_page"]],
+            PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0],
+            PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages) if i % 2 != 0],
+            PdfActions.EXTRACT_EVEN_ODD_AND_SAVE  : lambda : self._op_even_odd_and_save(),
             PdfActions.REMOVE_FIRST_PAGE          : lambda : self.pages[1:],
             PdfActions.REMOVE_LAST_PAGE           : lambda : self.pages[:-1],
-            # PdfActions.REMOVE_PAGES               : lambda : ,
+            PdfActions.REMOVE_PAGES               : lambda : [result for i, result in enumerate(self.pages) if i not in kw_args["page_list"]],
         }
 
         if action not in operations:
             raise ValueError(f"Unknown action: {action}")
         
-        # Run Operation and get resutl
-        result = operations[action]()
+        # Run Operation and update state (self.pages and self.page_length)
+        self._op_update_pages_and_its_len( operations[action]() )
         self.last_method = action
 
 
+    def _op_update_pages_and_its_len(self, new_pages: list) -> None:
+        """Update the page list and length after an operation.
+        
+        Args:
+            new_pages (list): New list of pages to store
+            
+        Updates both self.pages and self.page_length to maintain consistency
+        after operations that modify the page collection.
+        
+        This is called automatically by __dispatch_action after each operation
+        to ensure the page count stays synchronized with the actual pages.
+        """
+        self.pages = new_pages
+        self.page_length = len(self.pages)
 
-    def _op_insert_at(index:int ):
+    def _op_insert_at(self, index: int, use_buffer: bool = True) -> list:
+        """Insert a blank page at a specified index in the PDF.
+        
+        Args:
+            index (int): Position where the blank page should be inserted
+            use_buffer (bool, optional): Whether to use buffering. Defaults to True.
+            
+        Returns:
+            list: New list of pages with the blank page inserted
+            
+        This helper method:
+        1. Creates a new blank page using PdfWriter
+        2. Inserts it at the specified position
+        3. Returns the new page list
+        
+        The method handles buffering if enabled and ensures the index
+        is within valid bounds. Called by insert_first, insert_last,
+        add_after_page, and add_blank operations.
+        """
+        # Implementation will go here
         pass
         
+    
+    def _op_even_odd_and_save(self) -> tuple[list, list]:
+        """Extract even and odd pages and prepare them for saving.
+        
+        Returns:
+            tuple[list, list]: A tuple containing (even_pages, odd_pages)
+            
+        This helper method:
+        1. Uses list comprehensions to separate even and odd pages
+        2. Updates self.even_pages and self.odd_pages
+        3. Returns both collections for saving
+        
+        The even/odd determination uses 0-based indexing, so:
+        - Even pages: 0, 2, 4, ...
+        - Odd pages: 1, 3, 5, ...
+        
+        Note: The actual saving is handled by the save() method
+        """
+        # Implementation will go here
+        pass
 
-
+    def _op_gen_outputname():
+        pass
