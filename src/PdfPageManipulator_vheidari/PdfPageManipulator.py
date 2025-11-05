@@ -81,6 +81,7 @@ class PdfPageManipulator:
         self.pdf_name : str         = pdf_name
         self.path : str             = path
         self.full_path : str        = os.path.join(path, pdf_name)
+        self.savePath               = None
     
         # Pdf Pages Variables 
         self.pages : list           = []
@@ -89,7 +90,7 @@ class PdfPageManipulator:
         self.even_pages : list      = []
         self.odd_pages : list       = []
         self.last_method : str      = None
-        self.writer = PdfWriter()
+        self.writer                 = PdfWriter()
 
 
 
@@ -339,9 +340,28 @@ class PdfPageManipulator:
         self.__dispatch_action(PdfActions.REMOVE_PAGES, use_buffer, page_list = page_list)
          
 
-
+    # save pdfs methods ----------------------------------------------------------
     def save(self):
         pass 
+    
+    def _save_original(self, new_pdf_name: str = None):
+        # Prepare self.writer for original page
+        self.writer = None
+
+        # Get full_path 
+        full_path = self.full_path
+
+        # Check User request for new name 
+        if new_pdf_name != None:
+            full_path = self.path + new_pdf_name
+        
+        # Preapre Original Pdf 
+        for page in self.original_pages:
+            self.writer.add_page(page)
+    
+        # Wrire Original Pdf in to disk
+        with open(full_path, "wb") as output:
+            self.writer.write(output)
 
 
     # Private Methods
@@ -430,7 +450,7 @@ class PdfPageManipulator:
         pass
         
     
-    def _op_even_odd_and_save(self) -> tuple[list, list]:
+    def _op_even_odd_and_save(self) -> None:
         """Extract even and odd pages and prepare them for saving.
         
         Returns:
@@ -448,7 +468,32 @@ class PdfPageManipulator:
         Note: The actual saving is handled by the save() method
         """
         # Implementation will go here
-        pass
+        evens_writer, odds_writer   = PdfWriter() , PdfWriter()
+
+        # Extract Evens Pages
+        self.even_pages = [result for i, result in range(self.pages) if i % 2 == 0]
+        
+        # Extract Odd Pages
+        self.odd_pages = [result for i, result in range(self.pages) if i %  2 != 0]
+
+        # Prepare Evens and Odds Pages for Writing on the disk
+        for page in self.even_pages :
+            evens_writer.add_page(page)
+        
+        for page in self.odd_pages :
+            odds_writer.add_page(page)
+
+
+        even_fullpath = self.path + "even_pages_" + self.pdf_name
+        odd_fullpath  = self.path + "odd_pages_" + self.pdf_name
+
+
+        # Write evens and odds pages on the disk
+        with open(even_fullpath, "wb") as evens_output, open(odd_fullpath, "wb") as odds_output:
+            evens_writer.write(evens_output)
+            odds_writer.write(odds_output)
+
+        
 
     def _op_gen_outputname():
         pass
