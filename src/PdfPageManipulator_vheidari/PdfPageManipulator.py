@@ -26,8 +26,8 @@ class PdfActions(Enum):
         REMOVE_LAST_PAGE: Remove the last page
         REMOVE_PAGES: Remove specific pages
     """
-    INSERT_BLANK_FIRST        = "inser_blank_first"
-    INSERT_BLANK_LAST         = "inser_blank_last"
+    INSERT_BLANK_FIRST        = "insert_blank_first"
+    INSERT_BLANK_LAST         = "insert_blank_last"
     ADD_BLANK_AFTER           = "add_blank_after"
     ADD_BLANK_AT              = "add_blank_at"
     EXTRACT_PAGES             = "extract_pages"
@@ -410,7 +410,7 @@ class PdfPageManipulator:
             raise ValueError(f"Unknown action: {action}")
         
         # Run Operation and update state (self.pages and self.page_length)
-        if self.last_method != PdfActions.EXTRACT_EVEN_ODD_AND_SAVE : 
+        if action != PdfActions.EXTRACT_EVEN_ODD_AND_SAVE : 
             self._op_update_pages_and_its_len( operations[action]() )
         
         self.last_method = action
