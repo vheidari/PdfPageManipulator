@@ -3,7 +3,7 @@ import os
 from enum import Enum
 
 # Import third-party libraries
-from PyPDF2 import PdfReader , PdfWriter
+from PyPDF2 import PdfReader, PdfWriter
 
 
 class PdfActions(Enum):
@@ -26,10 +26,10 @@ class PdfActions(Enum):
         REMOVE_LAST_PAGE: Remove the last page
         REMOVE_PAGES: Remove specific pages
     """
-    INSERT_FIRST              = "inser_first"
-    INSERT_LAST               = "inser_last"
-    ADD_AFTER_PAGE            = "add_after_page"
-    ADD_BLANK                 = "add_blank"
+    INSERT_BLANK_FIRST        = "inser_blank_first"
+    INSERT_BLANK_LAST         = "inser_blank_last"
+    ADD_BLANK_AFTER           = "add_blank_after"
+    ADD_BLANK_AT              = "add_blank_at"
     EXTRACT_PAGES             = "extract_pages"
     EXTRACT_RANGE             = "extract_range"
     EXTRACT_EVENS             = "extract_evens"
@@ -120,7 +120,7 @@ class PdfPageManipulator:
 
 
     # insert page methods  ---------------------------------------------------------
-    def insert_first(self, use_buffer: bool = True) -> None:
+    def insert_blank_first(self, use_buffer: bool = True) -> None:
         """Insert a blank page at the beginning of the PDF.
         
         Args:
@@ -130,9 +130,9 @@ class PdfPageManipulator:
         will be shifted forward by one position.
         """
         index = 0
-        self.__dispatch_action(PdfActions.INSERT_FIRST, use_buffer, index=index), 
+        self.__dispatch_action(PdfActions.INSERT_BLANK_FIRST, use_buffer, index=index), 
 
-    def insert_last(self, use_buffer: bool = True) -> None:
+    def insert_blank_last(self, use_buffer: bool = True) -> None:
         """Insert a blank page at the end of the PDF.
         
         Args:
@@ -141,10 +141,10 @@ class PdfPageManipulator:
         The blank page will be appended as the last page of the document,
         after all existing pages.
         """
-        index = len(self.pages)
-        self.__dispatch_action(PdfActions.INSERT_LAST, use_buffer, index=index)
+        index = self.page_length
+        self.__dispatch_action(PdfActions.INSERT_BLANK_LAST, use_buffer, index=index)
 
-    def add_after_page(self, page_number: int, use_buffer: bool = True) -> None:
+    def add_blank_after(self, page_number: int, use_buffer: bool = True) -> None:
         """Insert a blank page after a specified page number.
         
         Args:
@@ -158,9 +158,9 @@ class PdfPageManipulator:
             Page numbers are 0-based (first page is 0, second is 1, etc.)
         """
         index = page_number
-        self.__dispatch_action(PdfActions.ADD_AFTER_PAGE, use_buffer, index=index)
+        self.__dispatch_action(PdfActions.ADD_BLANK_AFTER, use_buffer, index=index)
     
-    def add_blank(self, use_buffer: bool = True, after_page: int = None) -> None:
+    def add_blank_at(self, use_buffer: bool = True, after_page: int = None) -> None:
         """Add a blank page at a specified position or at the end.
         
         Args:
@@ -174,7 +174,7 @@ class PdfPageManipulator:
         Note:
             Page numbers are 0-based (first page is 0, second is 1, etc.)
         """
-        self.__dispatch_action(PdfActions.ADD_BLANK, use_buffer, after_page = after_page)
+        self.__dispatch_action(PdfActions.ADD_BLANK_AT, use_buffer, after_page = after_page)
 
 
 
@@ -341,8 +341,10 @@ class PdfPageManipulator:
          
 
     # save pdfs methods ----------------------------------------------------------
+    # Todo: 
     def save(self):
-        pass 
+        with open(self.full_path, "wb") as output_file:
+            self.writer.write(output_file) 
     
     def _save_original(self, new_pdf_name: str = None):
         # Prepare self.writer for original page
@@ -355,11 +357,11 @@ class PdfPageManipulator:
         if new_pdf_name != None:
             full_path = self.path + new_pdf_name
         
-        # Preapre Original Pdf 
+        # Preapre Original PDF for writing to disk
         for page in self.original_pages:
             self.writer.add_page(page)
     
-        # Wrire Original Pdf in to disk
+        # Wriring Original Pdf to disk
         with open(full_path, "wb") as output:
             self.writer.write(output)
 
@@ -390,10 +392,10 @@ class PdfPageManipulator:
         """        
         # Map each action to a lightweight lambda that calls the appropriate helper
         operations = {
-            PdfActions.INSERT_FIRST               : lambda : self._op_insert_at(kw_args["index"], use_buffer),
-            PdfActions.INSERT_LAST                : lambda : self._op_insert_at(kw_args["index"], use_buffer),
-            PdfActions.ADD_AFTER_PAGE             : lambda : self._op_insert_at(kw_args["index"], use_buffer),
-            PdfActions.ADD_BLANK                  : lambda : self._op_insert_at(kw_args["index"], use_buffer),
+            PdfActions.INSERT_BLANK_FIRST         : lambda : self._op_insert_at(kw_args["index"], use_buffer, PdfActions.INSERT_BLANK_FIRST),
+            PdfActions.INSERT_BLANK_LAST          : lambda : self._op_insert_at(kw_args["index"], use_buffer, PdfActions.INSERT_BLANK_LAST),
+            PdfActions.ADD_BLANK_AFTER            : lambda : self._op_insert_at(kw_args["index"], use_buffer, PdfActions.ADD_BLANK_AFTER),
+            PdfActions.ADD_BLANK_AT               : lambda : self._op_insert_at(kw_args["index"], use_buffer, PdfActions.ADD_BLANK_AT),
             PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if self.pages[i] in kw_args["page_list"]] ,
             PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"]: kw_args["to_page"]],
             PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0],
@@ -408,9 +410,10 @@ class PdfPageManipulator:
             raise ValueError(f"Unknown action: {action}")
         
         # Run Operation and update state (self.pages and self.page_length)
-        self._op_update_pages_and_its_len( operations[action]() )
+        if self.last_method != PdfActions.EXTRACT_EVEN_ODD_AND_SAVE : 
+            self._op_update_pages_and_its_len( operations[action]() )
+        
         self.last_method = action
-
 
     def _op_update_pages_and_its_len(self, new_pages: list) -> None:
         """Update the page list and length after an operation.
@@ -427,7 +430,8 @@ class PdfPageManipulator:
         self.pages = new_pages
         self.page_length = len(self.pages)
 
-    def _op_insert_at(self, index: int, use_buffer: bool = True) -> list:
+    # Todo : I think we should passing opration name to this method. decide about this one
+    def _op_insert_at(self, index: int, use_buffer: bool = True, op_name: PdfActions = None) -> list:
         """Insert a blank page at a specified index in the PDF.
         
         Args:
@@ -446,9 +450,46 @@ class PdfPageManipulator:
         is within valid bounds. Called by insert_first, insert_last,
         add_after_page, and add_blank operations.
         """
-        # Implementation will go here
-        pass
         
+        if index > self.page_length or index < 0:
+            raise ValueError(f"Index should be between 0 and {self.page_length}")
+
+        # Prepare writer 
+        self.writer = PdfActions()
+    
+        # Add a blank page by index
+        if op_name == PdfActions.ADD_BLANK_AT :
+            for i in range(self.page_length) : 
+                if i == index:
+                    self.writer.add_blank_page()
+                    self.writer.add_page(self.pages[i])
+                else :
+                    self.writer.add_page(self.pages[i])
+
+        # Add a blank page at the first
+        elif op_name == PdfActions.INSERT_BLANK_FIRST :
+            self.writer.add_blank_page()
+            for page in self.pages:
+                self.writer.add_page(page)
+
+        # Add a blank page at the last page
+        elif op_name == PdfActions.INSERT_BLANK_LAST :
+            for page in self.pages:
+                self.writer.add_page(page)
+            self.writer.add_blank_page()  
+
+        # Add a blank page after a page index 
+        elif op_name == PdfActions.ADD_BLANK_AFTER :
+            for i in range(self.page_length):
+                if i == index:
+                    self.writer.add_page(self.pages[i])
+                    self.writer.add_blank_page()
+                else :
+                    self.writer.add_page(self.pages[i])
+
+        return self.writer.pages
+
+
     
     def _op_even_odd_and_save(self) -> None:
         """Extract even and odd pages and prepare them for saving.
@@ -471,10 +512,10 @@ class PdfPageManipulator:
         evens_writer, odds_writer   = PdfWriter() , PdfWriter()
 
         # Extract Evens Pages
-        self.even_pages = [result for i, result in range(self.pages) if i % 2 == 0]
+        self.even_pages = [result for i, result in enumerate(self.pages) if i % 2 == 0]
         
         # Extract Odd Pages
-        self.odd_pages = [result for i, result in range(self.pages) if i %  2 != 0]
+        self.odd_pages = [result for i, result in enumerate(self.pages) if i %  2 != 0]
 
         # Prepare Evens and Odds Pages for Writing on the disk
         for page in self.even_pages :
@@ -483,10 +524,9 @@ class PdfPageManipulator:
         for page in self.odd_pages :
             odds_writer.add_page(page)
 
-
+        # Create Even and Odd Paths
         even_fullpath = self.path + "even_pages_" + self.pdf_name
-        odd_fullpath  = self.path + "odd_pages_" + self.pdf_name
-
+        odd_fullpath  = self.path + "odd_pages_"  + self.pdf_name
 
         # Write evens and odds pages on the disk
         with open(even_fullpath, "wb") as evens_output, open(odd_fullpath, "wb") as odds_output:
@@ -494,6 +534,6 @@ class PdfPageManipulator:
             odds_writer.write(odds_output)
 
         
-
+    # Todo 
     def _op_gen_outputname():
         pass
