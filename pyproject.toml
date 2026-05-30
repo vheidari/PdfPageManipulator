@@ -4,8 +4,8 @@ build-backend = "uv_build"
 
 
 [project]
-name = "PdfPageManipulator_vheidari"
-version = "0.0.1"
+name = "pdf-page-manipulator"
+version = "0.1.0"
 author = [
     {name ="Vahid Heidari", email="vahid-heidari@hotmail.com"}
 ]
@@ -13,6 +13,9 @@ description = "PdfPageManipulator is a small, simple, fast, and straightforward 
 
 readme = "README.md"
 requires-python = ">=3.0"
+dependencies = [
+    "PyPDF2>=3.0.0",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
