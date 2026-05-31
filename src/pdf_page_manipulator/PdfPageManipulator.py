@@ -187,6 +187,48 @@ class PdfPageManipulator:
         return self
 
 
+    def get_page_length(self) -> int:
+        """Return the current number of pages in the PDF.
+
+        This method provides a convenient way to access the current page count
+        after any modifications have been made. It simply returns the value of
+        `self.page_length`, which is updated by all operations that modify
+        `self.pages`.
+
+        Returns:
+            int: The current number of pages in the PDF.
+        """
+        
+        return self.page_length
+
+    def get_full_path(self) -> str:
+        """Return the full path to the PDF file being manipulated.
+
+        This method provides access to the internal `full_path` variable, which
+        is used for loading and saving the PDF. It returns the current value of
+        `self.full_path`, allowing callers to verify or use the path as needed.
+
+        Returns:
+            str: The full file path to the PDF document.
+        """
+        
+        return self.full_path
+
+    def get_save_path(self) -> str:
+        """Return the full path where the modified PDF will be saved.
+
+        This method provides access to the internal `save_path` variable, which
+        is used when writing the modified PDF to disk. It returns the current
+        value of `self.save_path`, allowing callers to verify or use the save
+        path as needed.
+
+        Returns:
+            str: The full file path where the modified PDF will be saved.
+        """
+        
+        return self.save_path
+
+
     # insert page methods  ---------------------------------------------------------
     def insert_blank_first(self, use_buffer: bool = True, page_size : PageSize = None) -> None:
         """
@@ -235,36 +277,38 @@ class PdfPageManipulator:
             None
         """
         
-        index = page_number
+        index = page_number - 1
+
         if page_size is None:
             get_page_size = PageSize()
             page_size = get_page_size.set_to_default()
         self.__dispatch_action(PdfActions.ADD_BLANK_AFTER, use_buffer, index=index, page_size = page_size)
     
-    def add_blank_at(self, use_buffer: bool = True, after_page: int = None, page_size: PageSize = None) -> None:
+    def add_blank_at(self, use_buffer: bool = True, page_number: int = None, page_size: PageSize = None) -> None:
         """
-        Add a blank page at a specified position in the PDF document.
+        Add a blank page at the specified position in the PDF.
+
         Args:
-            use_buffer (bool, optional): Whether to use an internal buffer for the operation.
-                Defaults to True.
-            after_page (int, optional): The page number after which to insert the blank page.
-                If None, the blank page will be added at the end of the document.
-                Defaults to None.
-            page_size (PageSize, optional): The size of the blank page to add.
-                If None, the default page size will be used. Defaults to None.
+            use_buffer (bool, optional): Whether to use the buffer for undo/redo functionality. Defaults to True.
+            page_number (int, optional): The page number where the blank page should be inserted. If None, defaults to the end of the document.
+                                          - Values <= 0 insert at the beginning
+                                          - Values >= total pages insert at the end
+                                          - Otherwise, inserts before the specified page number
+            page_size (PageSize, optional): The size of the blank page to be added. If None, defaults to the default page size.
+
         Returns:
             None
+
         Raises:
-            None (implicitly handles errors through __dispatch_action)
-        Example:
-            >>> manipulator.add_blank_at(after_page=5)
-            >>> manipulator.add_blank_at(use_buffer=False, page_size=PageSize.A4)
+            None
         """
-        
+
+        index = page_number - 1 
+
         if page_size is None:
             get_page_size = PageSize()
             page_size = get_page_size.set_to_default()
-        self.__dispatch_action(PdfActions.ADD_BLANK_AT, use_buffer, after_page = after_page, page_size = page_size)
+        self.__dispatch_action(PdfActions.ADD_BLANK_AT, use_buffer, index=index, page_size = page_size)
 
 
 
