@@ -1,14 +1,5 @@
-import unittest
+import os
+import pytest
 
-# Todo: check this part
-from PdfPageManipulator_vheidari import PdfPageManipulator
-
-def testPdfPageManipulator():
-     pass
-
-
-if __name__ == "main" :
-     # Todo : Check this part
-     test = PdfPageManipulator("PPMTest.pdf", "./")
-     test.load_pdf()
-     unittest.main()
+from pdf_page_manipulator import PdfPageManipulator, PageSize
+from pdf_page_manipulator.PdfPageManipulator import PdfActions

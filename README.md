@@ -84,6 +84,8 @@ This writes two files to the same directory as the original PDF:
 - `get_page_length() -> int`
 - `get_full_path() -> str`
 - `get_save_path() -> str`
+- `set_full_path -> None`
+- `set_save_path -> None`
 - `insert_blank_first(use_buffer: bool = True, page_size: PageSize = None)`
 - `insert_blank_last(use_buffer: bool = True, page_size: PageSize = None)`
 - `add_blank_after(page_number: int, use_buffer: bool = True, page_size: PageSize = None)`
