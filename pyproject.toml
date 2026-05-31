@@ -10,7 +10,7 @@ author = [
     {name ="Vahid Heidari", email="vahid-heidari@hotmail.com"}
 ]
 description = "PdfPageManipulator is a small, simple, fast, and straightforward Python package specially designed for GrabMyPdf software. This package offers a powerful and user-friendly interface that allows GrabMyPdf to manipulate PDF pages."
-
+keywords = ["pdf", "pdf-manipulation", "pages", "merge", "split", "exteract", "pdf-editor", "pdf-file", "manipulation"]
 readme = "README.md"
 requires-python = ">=3.0"
 dependencies = [
