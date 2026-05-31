@@ -1,31 +1,31 @@
 # PdfPageManipulator
 
-`PdfPageManipulator` is a small, simple, fast, and straightforward Python package designed to manipulate PDF pages programmatically. It is built around `PyPDF2` and provides a clear, object-oriented API for inserting blank pages, extracting page ranges, removing pages, and saving modified PDF documents.
+`PdfPageManipulator` is a simple Python package built on `PyPDF2` for programmatically manipulating PDF pages. It provides a clean object-oriented API for loading, inserting, extracting, removing, and saving PDF pages with optional page-size control.
 
-The source code lives in `src/pdf_page_manipulator/`, and the package metadata is defined in `pyproject.toml`.
+The source code lives in `src/pdf_page_manipulator/`, and package metadata is defined in `pyproject.toml`.
 
 ## Features
 
-- Load a PDF file and cache its pages in memory
+- Load and cache PDF pages in memory
 - Insert blank pages:
   - at the beginning
   - at the end
   - after a specific page
   - at a specific page index
-- Extract pages by index, range, or parity:
-  - even pages
-  - odd pages
-  - save even/odd pages to separate files
+- Extract pages by explicit index list or inclusive range
+- Extract even and odd pages separately
+- Write even/odd page split files directly to disk
 - Remove pages:
   - first page
   - last page
   - multiple specified pages
-- Save changes to a new PDF file with optional filename prefixes
-- Manage standard page sizes via `PageSize`
+- Save modified PDFs with optional filename prefixes
+- Inspect current document state with helper getters
+- Use standard page sizes via `PageSize`
 
 ## Installation
 
-Install the project dependencies in a Python environment that supports Python 3 (**Ensure your virtual environment is active.**):
+Install the project dependency in a Python environment that supports Python 3 (**ensure your virtual environment is active**):
 
 ```bash
 python3 -m pip install PyPDF2>=3.0.0
@@ -48,17 +48,24 @@ manipulator.load_pdf()
 # Insert a blank A4 page at the beginning
 manipulator.insert_blank_first(page_size=PageSize().set_to_A4())
 
-# Remove the last page
-manipulator.remove_last_page()
+# Insert a blank page after page 1
+manipulator.add_blank_after(1, page_size=PageSize().set_to_A4())
 
-# Extract a range of pages
+# Insert a blank page before page 2
+manipulator.add_blank_at(page_number=2, page_size=PageSize().set_to_A4())
+
+# Extract specific pages using zero-based indexes
+manipulator.extract_pages(page_list=[0, 2, 4])
+
+# Extract an inclusive page range: pages 0 through 2
 manipulator.extract_range(page_list=[0, 2])
 
-# Save the modified document
+# Remove the first page and save the result
+manipulator.remove_first_page()
 manipulator.save(prefix_name="edited")
 ```
 
-### Extract even/odd pages and save separately
+### Save even and odd pages separately
 
 ```python
 manipulator = PdfPageManipulator("example.pdf", ".")
@@ -66,28 +73,42 @@ manipulator.load_pdf()
 manipulator.extract_even_odd_and_save()
 ```
 
+This writes two files to the same directory as the original PDF:
+- `evens_pages_<original_filename>.pdf`
+- `odds_pages_<original_filename>.pdf`
+
 ## API Summary
 
-- `PdfPageManipulator(pdf_name, path)`
+- `PdfPageManipulator(pdf_name: str, path: str)`
 - `load_pdf()`
-- `insert_blank_first(use_buffer=True, page_size=None)`
-- `insert_blank_last(use_buffer=True, page_size=None)`
-- `add_blank_after(page_number, use_buffer=True, page_size=None)`
-- `add_blank_at(use_buffer=True, after_page=None, page_size=None)`
-- `extract_pages(use_buffer=True, page_list=None)`
-- `extract_range(use_buffer=True, page_list=None)`
-- `extract_evens(use_buffer=True)`
-- `extract_odds(use_buffer=True)`
-- `extract_even_odd_and_save(use_buffer=True)`
-- `remove_first_page(use_buffer=True)`
-- `remove_last_page(use_buffer=True)`
-- `remove_pages(page_list=None, use_buffer=True)`
-- `save(save_original=False, prefix_name="")`
+- `get_page_length() -> int`
+- `get_full_path() -> str`
+- `get_save_path() -> str`
+- `insert_blank_first(use_buffer: bool = True, page_size: PageSize = None)`
+- `insert_blank_last(use_buffer: bool = True, page_size: PageSize = None)`
+- `add_blank_after(page_number: int, use_buffer: bool = True, page_size: PageSize = None)`
+- `add_blank_at(use_buffer: bool = True, page_number: int = None, page_size: PageSize = None)`
+- `extract_pages(use_buffer: bool = True, page_list: list[int] = None)`
+- `extract_range(use_buffer: bool = True, page_list: list[int] = None)`
+- `extract_evens(use_buffer: bool = True)`
+- `extract_odds(use_buffer: bool = True)`
+- `extract_even_odd_and_save(use_buffer: bool = True)`
+- `remove_first_page(use_buffer: bool = True)`
+- `remove_last_page(use_buffer: bool = True)`
+- `remove_pages(page_list: list[int] = None, use_buffer: bool = True)`
+- `save(save_original = False, prefix_name: str = "")`
+
+## Notes
+
+- `page_list` values are zero-based indexes.
+- `extract_range` accepts `[start, end]` and includes both endpoints.
+- `extract_even_odd_and_save()` writes split files directly and does not modify the in-memory page list.
+- `PageSize` provides convenient standard sizes such as `set_to_A4()`.
 
 ## Package Structure
 
 - `src/pdf_page_manipulator/PdfPageManipulator.py` — main implementation
-- `tests/testPdfPageManipulator.py` — starting point for tests
+- `tests/testPdfPageManipulator.py` — test module
 - `pyproject.toml` — package metadata and dependencies
 
 ## License
