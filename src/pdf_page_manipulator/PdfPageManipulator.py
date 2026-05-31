@@ -229,6 +229,45 @@ class PdfPageManipulator:
         return self.save_path
 
 
+    def set_full_path(self, new_full_path: str) -> None:
+        """
+        Set the full path for the PDF file by combining the provided directory path with the PDF name.
+        Args:
+            new_full_path (str): The directory path where the PDF file is located. Must not be an empty string.
+        Raises:
+            ValueError: If new_full_path is an empty string.
+        Returns:
+            None
+        """
+
+        if new_full_path == "" :
+            raise ValueError("new_full_path can't be an empty string")
+        
+        self.full_path = os.path.join(new_full_path, self.pdf_name)
+
+    def set_save_path(self, new_save_path: str, pdf_name : str = "") -> None:
+        """
+        Set the save path for the PDF file.
+        Args:
+            new_save_path (str): The directory path where the PDF will be saved.
+                                Cannot be an empty string.
+            pdf_name (str, optional): The name of the PDF file to save. If not provided,
+                                     defaults to "new_{original_pdf_name}". Defaults to "".
+        Raises:
+            ValueError: If new_save_path is an empty string.
+        Returns:
+            None
+        """
+
+        if new_save_path == "" :
+            raise ValueError("new_save_path can't be an empty string")
+        
+        if pdf_name == "":
+            self.save_path = os.path.join(new_save_path, f"new_{self.pdf_name}")
+        else:
+            self.save_path = os.path.join(new_save_path, f"{pdf_name}")
+
+
     # insert page methods  ---------------------------------------------------------
     def insert_blank_first(self, use_buffer: bool = True, page_size : PageSize = None) -> None:
         """
@@ -443,7 +482,7 @@ class PdfPageManipulator:
         """
         
         if page_list == None:
-                 raise ValueError("page_list cant' be a None, plase pass correct page_list. ex: [0, 11, 12, 99]")
+            raise ValueError("page_list cant' be a None, plase pass correct page_list. ex: [0, 11, 12, 99]")
         
         self.__dispatch_action(PdfActions.REMOVE_PAGES, use_buffer, page_list = page_list)
          
@@ -551,8 +590,8 @@ class PdfPageManipulator:
             PdfActions.ADD_BLANK_AT               : lambda : self._op_insert_at(kw_args["index"], PdfActions.ADD_BLANK_AT, page_size = kw_args["page_size"]),
             PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if i in kw_args["page_list"]] ,
             PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"]: kw_args["to_page"] + 1],
-            PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0],
-            PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages) if i % 2 != 0],
+            PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 != 0], # Note: 0-based indexing means even pages are at odd indices
+            PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0], # Note: 0-based indexing means odd pages are at even indices
             PdfActions.EXTRACT_EVEN_ODD_AND_SAVE  : lambda : self._op_even_odd_and_save(),
             PdfActions.REMOVE_FIRST_PAGE          : lambda : self.pages[1:],
             PdfActions.REMOVE_LAST_PAGE           : lambda : self.pages[:-1],
@@ -562,10 +601,16 @@ class PdfPageManipulator:
         if action not in operations:
             raise ValueError(f"Unknown action: {action}")
         
+        # Handle the special case for EXTRACT_EVEN_ODD_AND_SAVE which does not update self.pages
+        if action == PdfActions.EXTRACT_EVEN_ODD_AND_SAVE:
+            operations[action]()
+
+
         # Run Operation and update state (self.pages and self.page_length)
         if action != PdfActions.EXTRACT_EVEN_ODD_AND_SAVE : 
             self._op_update_pages_and_its_len( operations[action]() )
         
+
         self.last_method = action
 
     def _op_update_pages_and_its_len(self, new_pages: list) -> None:
@@ -669,10 +714,10 @@ class PdfPageManipulator:
         evens_writer, odds_writer   = PdfWriter() , PdfWriter()
 
         # Extract Evens Pages
-        self.even_pages = [result for i, result in enumerate(self.pages) if i % 2 == 0]
+        self.even_pages = [result for i, result in enumerate(self.pages) if i % 2 != 0] # Note: 0-based indexing means even pages are at odd indices
         
         # Extract Odd Pages
-        self.odd_pages = [result for i, result in enumerate(self.pages) if i %  2 != 0]
+        self.odd_pages = [result for i, result in enumerate(self.pages) if i %  2 == 0] # Note: 0-based indexing means odd pages are at even indices
 
         # Prepare Evens and Odds Pages for Writing on the disk
         for page in self.even_pages :
