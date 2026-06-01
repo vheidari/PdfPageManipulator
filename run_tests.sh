@@ -11,7 +11,7 @@ echo "🔧 Activating virtual environment..."
 source ./$ENVNAME/bin/activate
 
 # Run the cleanup script to remove old test files
-bash ./cleanuptest.sh
+bash ./cleanup_tests.sh
 
 echo "✅ Running tests for PdfPageManipulator..."
 

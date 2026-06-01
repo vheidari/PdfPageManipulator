@@ -107,10 +107,29 @@ This writes two files to the same directory as the original PDF:
 - `extract_even_odd_and_save()` writes split files directly and does not modify the in-memory page list.
 - `PageSize` provides convenient standard sizes such as `set_to_A4()`.
 
+## Utility Scripts
+
+This repository includes helper scripts to simplify setup, testing, and cleanup.
+
+- `install_toolchain.sh`
+  - Creates a Python virtual environment named `PdfPageManipulatorEnv`.
+  - Installs required dependencies: `PyPDF2`, `pytest`, `pytest-cov`, `pytest-mock`, `pytest-html`, `build`, and `twine`.
+  - Use before running tests or working with the project for the first time.
+
+- `run_tests.sh`
+  - Activates the `PdfPageManipulatorEnv` virtual environment.
+  - Runs `cleanup_tests.sh` to remove stale generated test files.
+  - Executes `pytest` against `tests/test_PdfPageManipulator.py` with verbose output.
+  - Use this script to run the project test suite quickly.
+
+- `cleanup_tests.sh`
+  - Removes generated PDF test artifacts matching `*_PPMTest.pdf` from the `tests/` directory.
+  - Use this script to clean the test workspace before or after running tests.
+
 ## Package Structure
 
 - `src/pdf_page_manipulator/PdfPageManipulator.py` — main implementation
-- `tests/testPdfPageManipulator.py` — test module
+- `tests/test_PdfPageManipulator.py` — test module
 - `pyproject.toml` — package metadata and dependencies
 
 ## License

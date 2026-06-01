@@ -1,5 +1,3 @@
-
-
 from .PdfPageManipulator import PdfPageManipulator
 from .PdfPageManipulator import PageSize
 

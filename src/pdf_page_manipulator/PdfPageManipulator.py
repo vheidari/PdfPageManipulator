@@ -588,7 +588,7 @@ class PdfPageManipulator:
             PdfActions.INSERT_BLANK_LAST          : lambda : self._op_insert_at(kw_args["index"], PdfActions.INSERT_BLANK_LAST, page_size = kw_args["page_size"]),
             PdfActions.ADD_BLANK_AFTER            : lambda : self._op_insert_at(kw_args["index"], PdfActions.ADD_BLANK_AFTER, page_size = kw_args["page_size"]),
             PdfActions.ADD_BLANK_AT               : lambda : self._op_insert_at(kw_args["index"], PdfActions.ADD_BLANK_AT, page_size = kw_args["page_size"]),
-            PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if i in kw_args["page_list"]] ,
+            PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if i in kw_args["page_list"]], 
             PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"]: kw_args["to_page"] + 1],
             PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 != 0], # Note: 0-based indexing means even pages are at odd indices
             PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0], # Note: 0-based indexing means odd pages are at even indices
@@ -613,6 +613,7 @@ class PdfPageManipulator:
 
         self.last_method = action
 
+    # Helper Methods for Operations
     def _op_update_pages_and_its_len(self, new_pages: list) -> None:
         """Update the page list and length after an operation.
         
@@ -629,6 +630,7 @@ class PdfPageManipulator:
         self.pages = new_pages
         self.page_length = len(self.pages)
 
+    # Helper Methods for Operations
     def _op_insert_at(self, index: int, op_name: PdfActions = None, **kw_args) -> list:
         """
         Insert blank pages at specified positions in the PDF document.
@@ -697,7 +699,8 @@ class PdfPageManipulator:
         return list(self.writer.pages)
 
 
-    
+    # This method is used by the dispatcher to handle the special case of extracting even and odd pages
+    # and saving them directly to disk without modifying self.pages.
     def _op_even_odd_and_save(self) -> None:
         """Separate pages into even and odd sets and write them to disk.
 
@@ -735,7 +738,7 @@ class PdfPageManipulator:
             evens_writer.write(evens_output)
             odds_writer.write(odds_output)
 
-        
+    # Helper Methods for Operations
     def _prepare_writer(self):
         """
         Initialize and prepare a PdfWriter instance for PDF manipulation.
@@ -746,6 +749,7 @@ class PdfPageManipulator:
         self.writer = None
         self.writer = PdfWriter()
 
+    # Helper Methods for Operations
     def _get_new_fullpath(self, new_path: str = "", prefix: str = "") -> str:
         """
         Generate a new file path with a prefix added to the PDF filename.
