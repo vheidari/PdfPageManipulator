@@ -588,14 +588,14 @@ class PdfPageManipulator:
             PdfActions.INSERT_BLANK_LAST          : lambda : self._op_insert_at(kw_args["index"], PdfActions.INSERT_BLANK_LAST, page_size = kw_args["page_size"]),
             PdfActions.ADD_BLANK_AFTER            : lambda : self._op_insert_at(kw_args["index"], PdfActions.ADD_BLANK_AFTER, page_size = kw_args["page_size"]),
             PdfActions.ADD_BLANK_AT               : lambda : self._op_insert_at(kw_args["index"], PdfActions.ADD_BLANK_AT, page_size = kw_args["page_size"]),
-            PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages) if i in kw_args["page_list"]], 
-            PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"]: kw_args["to_page"] + 1],
-            PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages) if i % 2 != 0], # Note: 0-based indexing means even pages are at odd indices
-            PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages) if i % 2 == 0], # Note: 0-based indexing means odd pages are at even indices
+            PdfActions.EXTRACT_PAGES              : lambda : [result for i, result in enumerate(self.pages, start=1) if i in kw_args["page_list"]], 
+            PdfActions.EXTRACT_RANGE              : lambda : self.pages[kw_args["from_page"] - 1: kw_args["to_page"]],
+            PdfActions.EXTRACT_EVENS              : lambda : [result for i, result in enumerate(self.pages, start=1) if i % 2 == 0],
+            PdfActions.EXTRACT_ODDS               : lambda : [result for i, result in enumerate(self.pages, start=1) if i % 2 != 0],
             PdfActions.EXTRACT_EVEN_ODD_AND_SAVE  : lambda : self._op_even_odd_and_save(),
             PdfActions.REMOVE_FIRST_PAGE          : lambda : self.pages[1:],
             PdfActions.REMOVE_LAST_PAGE           : lambda : self.pages[:-1],
-            PdfActions.REMOVE_PAGES               : lambda : [result for i, result in enumerate(self.pages) if i not in kw_args["page_list"]],
+            PdfActions.REMOVE_PAGES               : lambda : [result for i, result in enumerate(self.pages, start=1) if i not in kw_args["page_list"]],
         }
 
         if action not in operations:
@@ -717,10 +717,10 @@ class PdfPageManipulator:
         evens_writer, odds_writer   = PdfWriter() , PdfWriter()
 
         # Extract Evens Pages
-        self.even_pages = [result for i, result in enumerate(self.pages) if i % 2 != 0] # Note: 0-based indexing means even pages are at odd indices
+        self.even_pages = [result for i, result in enumerate(self.pages, start=1) if i % 2 == 0] 
         
         # Extract Odd Pages
-        self.odd_pages = [result for i, result in enumerate(self.pages) if i %  2 == 0] # Note: 0-based indexing means odd pages are at even indices
+        self.odd_pages = [result for i, result in enumerate(self.pages, start=1) if i %  2 != 0] 
 
         # Prepare Evens and Odds Pages for Writing on the disk
         for page in self.even_pages :

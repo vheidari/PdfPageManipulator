@@ -176,9 +176,9 @@ def test_add_blank_at():
     page_size = PageSize()
     manipulator.load_pdf()
     original_page_length = manipulator.get_page_length()
+    manipulator.add_blank_at(page_number=2, page_size=page_size.set_to_A4())
     manipulator.add_blank_at(page_number=9, page_size=page_size.set_to_A4())
     manipulator.add_blank_at(page_number=14, page_size=page_size.set_to_A4())
-    manipulator.add_blank_at(page_number=2, page_size=page_size.set_to_A4())
 
     manipulator.save(prefix_name=result_file_prefix)
     
@@ -206,7 +206,7 @@ def test_extract_pages():
     # then a new PDF file should be created with the extracted pages.
     manipulator = PdfPageManipulator("PPMTest.pdf", "./tests/")
     manipulator.load_pdf()
-    manipulator.extract_pages(page_list=[0, 2, 4, 6, 8]) # exteract odd pages from the original PDF
+    manipulator.extract_pages(page_list=[2, 4, 6, 8]) # exteract even pages from the original PDF
     manipulator.save(prefix_name=result_file_prefix)
     
     # Load the new PDF and check the page length
@@ -214,9 +214,9 @@ def test_extract_pages():
     mp_test.load_pdf()
     test_page_length = mp_test.get_page_length()
 
-    expected_page_length = 5
+    expected_page_length = 4
     
-    # The page length should be 5 because we extracted 5 pages from the original PDF.
+    # The page length should be 4 because we extracted 4 pages from the original PDF.
     assert test_page_length == expected_page_length, f"Expected page length to be {expected_page_length}, but got {test_page_length}"
 
     
