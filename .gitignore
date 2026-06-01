@@ -1,1 +1,4 @@
 PdfPageManipulatorEnv/
+tests/__pycache__/
+src/pdf_page_manipulator/__pycache__/
+tests/*_PPMTest.pdf
